@@ -20,9 +20,12 @@ getMinimumDistanceStations() ->
     call({getMinimumDistanceStations}).
 
 stop() ->
-    call({stop}).
+    call(stop).
 
-call(Args) ->
+crash() ->
+    pollution_server ! crash.
+
+call({Args}) ->
     pollution_server ! {self(), Args},
     receive
         {_Pid, Val} -> io:format("~w~n",[Val]);

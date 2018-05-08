@@ -1,5 +1,5 @@
 -module(pollution_server).
--export([start/0, stop/0]).
+-export([start/0, stop/0, crash/0]).
 -record(value, {name,
                 date,
                 pollutionType,
@@ -22,19 +22,23 @@ call({getMinimumDistanceStations}, Monitor) ->
 
 pollution_server(Monitor) ->
     receive
-        {From, {stop}} -> 
-            From ! {self(), {server_stopped}},
+        stop -> 
             ok;
+	crash ->
+	    crash(); 
+	{From, getState} ->
+	    From ! {self(), Monitor},
+	    pollution_server(Monitor);
         {From, Args} ->
             case call(Args, Monitor) of
                 {ok, Result} -> 
-                    From ! {self(), {ok, Result}},
+                    From ! {self(), Result},
                     pollution_server(Result);
-                {error, _} -> 
-                    From ! {self(), {error}},
+                {error, X} -> 
+                    From ! {self(), {error, X}},
                     pollution_server(Monitor);
-                _ ->
-                    From ! {self(), {error}},
+                X ->
+                    From ! {self(), {weird, X}},
                     pollution_server(Monitor)
             end
     end.
@@ -48,6 +52,9 @@ start() ->
 
 stop() ->
     pollution_server ! {self(), {stop}}. 
+
+crash() ->
+    1/0.
 
 addStation(Name, Coord = {X,Y}, #{coords:= Coords, names := Names} = Monitor) 
   when is_list(Name) and is_number(X) and is_number(Y) ->
