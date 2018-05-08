@@ -4,7 +4,8 @@
 %% API %%
 -export([
          start_link/0,
-         close/0,
+         stop/0,
+         crash/0,
          addStation/2,
          addValue/4,
          removeValue/3,
@@ -17,7 +18,7 @@
 -export([init/1,handle_call/3,handle_cast/2,terminate/2]).
 
 %% START %%
-start_link()   -> gen_server:start_link({local, pollution_server}, ?MODULE,[],[]).
+start_link()   -> gen_server:start_link({local, pollution_server}, ?MODULE, [], []).
 
 %% INTERFEJS KLIENT -> SERWER %%
 
@@ -38,10 +39,12 @@ getMinimumDistanceStations() ->
 getState() ->
     gen_server:call(pollution_server, {getState}).
 
-close()     -> gen_server:call(pollution_server, terminate).
+stop()     -> gen_server:call(pollution_server, terminate).
 init(_)     -> 
     Monitor = #{coords => #{}, names => #{},  values => []},
     {ok, Monitor}.
+
+crash() -> 1/0.
 
 %% OBSŁUGA WIADOMOŚCI %%
 handle_cast({addStation, Name, Coords},	State) -> 
